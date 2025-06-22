@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Cifrado PWA</title>
+    <!-- Configuración para PWA -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chat Cifrado">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; /* Usamos Inter como se sugiere */
+            margin: 20px; 
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #chat-area { 
+            border: 1px solid #e0e0e0; 
+            padding: 15px; 
+            height: 350px; /* Aumentado para mejor visualización */
+            overflow-y: scroll; 
+            margin-bottom: 15px; 
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: #007bff #f0f2f5; /* Firefox */
+        }
+        #chat-area::-webkit-scrollbar { /* Chrome, Safari, Edge */
+            width: 8px;
+        }
+        #chat-area::-webkit-scrollbar-track {
+            background: #f0f2f5;
+            border-radius: 10px;
+        }
+        #chat-area::-webkit-scrollbar-thumb {
+            background-color: #007bff;
+            border-radius: 10px;
+            border: 2px solid #f0f2f5;
+        }
+        .message { 
+            margin-bottom: 8px; 
+            padding: 8px 12px;
+            border-radius: 8px;
+            background-color: #e6f7ff; /* Fondo para mensajes */
+            color: #333;
+            cursor: pointer; 
+            transition: background-color 0.2s ease;
+            word-wrap: break-word; /* Para manejar mensajes largos */
+        }
+        .message:hover {
+            background-color: #d1efff;
+        }
+        #input-area {
+            display: flex;
+            flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+            gap: 10px; /* Espacio entre elementos */
+            margin-bottom: 15px;
+        }
+        #input-area input[type="text"] { 
+            flex-grow: 1; /* Permite que los inputs crezcan */
+            padding: 10px 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px;
+            font-size: 16px;
+            min-width: 120px; /* Ancho mínimo para inputs */
+        }
+        #input-area button { 
+            padding: 10px 20px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer; 
+            font-size: 16px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        #input-area button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        #input-area button:active {
+            transform: translateY(0);
+        }
+
+        #decrypted-area { 
+            margin-top: 10px; 
+            border: 1px solid #e0e0e0; 
+            padding: 15px; 
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        #decrypted-area p { 
+            margin: 5px 0; 
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* Estilos para el switch de pausa */
+        .pause-switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            background-color: #f0f2f5;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .pause-switch-container label {
+            margin-right: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #007bff;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #007bff;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Estilos para el Message Box */
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .message-box-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .message-box-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .message-box-overlay.visible .message-box-content {
+            transform: translateY(0);
+        }
+        .message-box-content h3 {
+            margin-top: 0;
+            color: #dc3545; /* Rojo para errores */
+            font-size: 1.5em;
+        }
+        .message-box-content p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        .message-box-content button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        .message-box-content button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Media queries para responsividad */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.3em;
+            }
+            #input-area input[type="text"],
+            #input-area button {
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+            .message {
+                padding: 6px 10px;
+                font-size: 0.95em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Cifrado PWA</h1>
+
+        <div class="pause-switch-container">
+            <label for="pauseToggle">Pausar recepción de mensajes:</label>
+            <label class="switch">
+                <input type="checkbox" id="pauseToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div id="chat-area">
+            <!-- Los mensajes se cargarán aquí -->
+        </div>
+
+        <div id="input-area">
+            <input type="text" id="nickname" placeholder="Tu alias" autocomplete="off">
+            <input type="text" id="message" placeholder="Escribe tu mensaje" autocomplete="off">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Mensaje Descifrado</h2>
+        <div id="decrypted-area">
+            <p id="decrypted-text">Haz clic en un mensaje para descifrarlo.</p>
+        </div>
+    </div>
+
+    <!-- Message Box HTML -->
+    <div class="message-box-overlay" id="messageBox">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxMessage"></p>
+            <button onclick="closeMessageBox()">Aceptar</button>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chat-area');
+        const messageInput = document.getElementById('message');
+        const nicknameInput = document.getElementById('nickname');
+        const decryptedText = document.getElementById('decrypted-text');
+        const pauseToggle = document.getElementById('pauseToggle');
+
+        let fetchIntervalId; // Para almacenar el ID del setInterval
+        let isFetchingPaused = false; // Estado de la pausa
+
+        // --- Funciones de Message Box ---
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxTitle = document.getElementById('messageBoxTitle');
+        const messageBoxMessage = document.getElementById('messageBoxMessage');
+
+        function showMessageBox(title, message) {
+            messageBoxTitle.textContent = title;
+            messageBoxMessage.textContent = message;
+            messageBox.classList.add('visible');
+        }
+
+        function closeMessageBox() {
+            messageBox.classList.remove('visible');
+        }
+        // --- Fin Funciones de Message Box ---
+
+        // Función para cargar los mensajes
+        async function fetchMessages() {
+            if (isFetchingPaused) {
+                console.log('Recepción de mensajes pausada.');
+                return; // No hacer nada si está pausado
+            }
+
+            try {
+                // Usamos rutas relativas ya que el API Gateway está sirviendo esta página
+                const response = await fetch(`/receive`); 
+                if (response.ok) {
+                    const data = await response.json();
+                    chatArea.innerHTML = ''; // Limpiar la ventana de chat
+                    data.forEach(msg => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('message');
+                        // Aseguramos que el contenido HTML sea seguro
+                        messageDiv.textContent = `${msg.sender}: ${msg.encrypted_content}`; 
+                        messageDiv.onclick = () => decryptMessage(msg.encrypted_content);
+                        chatArea.appendChild(messageDiv);
+                    });
+                    // Mantener el scroll en la parte inferior
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                } else {
+                    console.error('Error al obtener los mensajes:', response.status);
+                    showMessageBox('Error', `Error al obtener los mensajes: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error de red:', error);
+                showMessageBox('Error de Red', `No se pudo conectar con el servidor: ${error.message}. Asegúrate de que los microservicios estén corriendo.`);
+            }
+        }
+
+        // Función para enviar mensajes
+        async function sendMessage() {
+            const nickname = nicknameInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!nickname) {
+                showMessageBox('Atención', 'Por favor, ingresa un alias.');
+                return;
+            }
+
+            if (message) {
+                try {
+                    // Usamos rutas relativas ya que el API Gateway está sirviendo esta página
+                    const response = await fetch(`/send`, { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ nickname: nickname, message: message })
+                    });
+
+                    if (response.ok) {
+                        messageInput.value = ''; // Limpiar el input después de enviar
+                        if (!isFetchingPaused) { // Solo actualizar si no está pausado
+                           fetchMessages(); // Recargar los mensajes para ver el tuyo
+                        } else {
+                           console.log('Mensaje enviado, pero la recepción está pausada. Activa para ver el nuevo mensaje.');
+                        }
+                        
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                        console.error('Error al enviar el mensaje:', response.status, errorData);
+                        showMessageBox('Error al Enviar', `Error al enviar el mensaje (${response.status}): ${errorData.error || 'Mensaje de error no disponible.'}`);
+                    }
+                } catch (error) {
+                    console.error('Error de red:', error);
+                    showMessageBox('Error de Red', `No se pudo conectar con el servidor: ${error.message}. Asegúrate de que los microservicios estén corriendo.`);
+                }
+            }
+        }
+
+        // Función para descifrar un mensaje
+        async function decryptMessage(encryptedMessage) {
+            try {
+                // Usamos rutas relativas ya que el API Gateway está sirviendo esta página
+                const response = await fetch(`/decrypt`, { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ encrypted_message: encryptedMessage })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    decryptedText.textContent = data.decrypted_message;
+                } else {
+                    const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                    console.error('Error al descifrar el mensaje:', response.status, errorData);
+                    decryptedText.textContent = `Error al descifrar el mensaje: ${errorData.error || 'Mensaje de error no disponible.'}`;
+                    showMessageBox('Error de Descifrado', `No se pudo descifrar el mensaje: ${errorData.error || 'Intenta de nuevo.'}`);
+                }
+            } catch (error) {
+                console.error('Error de red:', error);
+                decryptedText.textContent = 'Error de conexión al descifrar.';
+                showMessageBox('Error de Red', `No se pudo conectar con el servidor de descifrado: ${error.message}.`);
+            }
+        }
+
+        // Lógica del switch de pausa
+        pauseToggle.addEventListener('change', () => {
+            isFetchingPaused = pauseToggle.checked;
+            if (isFetchingPaused) {
+                clearInterval(fetchIntervalId);
+                console.log('Recepción de mensajes pausada.');
+                showMessageBox('Pausa Activada', 'La recepción automática de mensajes ha sido pausada.');
+            } else {
+                fetchIntervalId = setInterval(fetchMessages, 2000);
+                console.log('Recepción de mensajes reanudada.');
+                showMessageBox('Pausa Desactivada', 'La recepción automática de mensajes ha sido reanudada.');
+                fetchMessages(); // Cargar mensajes inmediatamente al reanudar
+            }
+        });
+
+        // Cargar los mensajes iniciales y establecer un intervalo para actualizar
+        // Iniciamos el intervalo solo si no está pausado al cargar la página
+        if (!isFetchingPaused) {
+            fetchMessages();
+            fetchIntervalId = setInterval(fetchMessages, 2000); // Actualizar cada 2 segundos
+        }
+
+
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Fallo el registro del Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
