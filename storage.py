@@ -20,4 +20,4 @@ def get_all_messages():
 
 if __name__ == '__main__':
     print("Microservicio de Almacenamiento de Mensajes iniciado en el puerto 5002")
-    app.run(host='0.0.0.0', port=5002)
+    app.run(host='0.0.0.0', port=8000)
