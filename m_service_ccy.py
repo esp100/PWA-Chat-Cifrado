@@ -7,7 +7,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
 CRYPTO_SERVICE_URL = 'http://localhost:5001'
-MESSAGE_STORE_SERVICE_URL = 'http://localhost:5002'
+MESSAGE_STORE_SERVICE_URL = 'https://48tc5wxqek.us-east-2.awsapprunner.com'# 'http://localhost:5002'
 
 
 @app.get('/')
