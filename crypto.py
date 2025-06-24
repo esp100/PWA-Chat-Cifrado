@@ -57,4 +57,4 @@ def decrypt_endpoint():
 
 if __name__ == '__main__':
     print("Microservicio de Cifrado/Descifrado iniciado en el puerto 5001")
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8080)
