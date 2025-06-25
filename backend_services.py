@@ -9,32 +9,18 @@ import traceback
 app = Flask(__name__)
 CORS(app)
 
-# --- Lógica de Crypto ---
-# --- Lógica de Crypto (con depuración) ---
-try:
-    print("[DEBUG] Cargando variables de entorno para criptografía...")
-    KEY_HEX = os.environ.get('CRYPTO_KEY')
-    IV_HEX = os.environ.get('CRYPTO_IV')
+# --- Lógica de Crypto --- 
+KEY = os.environ.get('CRYPTO_KEY')
+IV = os.environ.get('CRYPTO_IV')
 
-    if not KEY_HEX or not IV_HEX:
-        raise RuntimeError("ERROR FATAL: Una o ambas variables (CRYPTO_KEY, CRYPTO_IV) no están definidas en la configuración de Cloud Run.")
+if not KEY or not IV:
+    raise RuntimeError("Las variables de entorno CRYPTO_KEY y CRYPTO_IV no están definidas.")
 
-    print(f"[DEBUG] CRYPTO_KEY leída: {'*' * len(KEY_HEX)}") # No mostrar la clave real en logs
-    print(f"[DEBUG] CRYPTO_IV leída: {'*' * len(IV_HEX)}")
+KEY = bytes.fromhex(KEY)
+IV = bytes.fromhex(IV)
 
-    print("[DEBUG] Intentando convertir claves de hexadecimal a bytes...")
-    KEY = bytes.fromhex(KEY_HEX)
-    IV = bytes.fromhex(IV_HEX)
-    print("[DEBUG] Conversión de claves exitosa.")
 
-except Exception as e:
-    print("!!!!!!!!!! ERROR CRÍTICO AL INICIAR LA APLICACIÓN !!!!!!!!!!!", file=sys.stderr)
-    print(f"Tipo de error: {type(e).__name__}", file=sys.stderr)
-    print(f"Mensaje de error: {e}", file=sys.stderr)
-    print("Traceback completo:", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    sys.exit(1) # Forzamos la salida para asegurar que el contenedor se detenga
-    
+
 def cypher(message: str) -> str:
     cipher_c = AES.new(KEY, AES.MODE_CFB, IV)
     ciphered_bytes = cipher_c.encrypt(message.encode('utf-8'))
