@@ -1,1 +1,1 @@
-web: gunicorn -w 4 m_service_ccy:app
+web: gunicorn -w 1 m_service_ccy:app
