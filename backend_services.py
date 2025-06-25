@@ -3,20 +3,38 @@ from flask_cors import CORS
 from base64 import b64encode, b64decode
 from Crypto.Cipher import AES
 import os
+import sys
+import traceback
 
 app = Flask(__name__)
 CORS(app)
 
 # --- Lógica de Crypto ---
-KEY = os.environ.get('CRYPTO_KEY')
-IV = os.environ.get('CRYPTO_IV')
+# --- Lógica de Crypto (con depuración) ---
+try:
+    print("[DEBUG] Cargando variables de entorno para criptografía...")
+    KEY_HEX = os.environ.get('CRYPTO_KEY')
+    IV_HEX = os.environ.get('CRYPTO_IV')
 
-if not KEY or not IV:
-    raise RuntimeError("CRYPTO_KEY and CRYPTO_IV environment variables are not set.")
+    if not KEY_HEX or not IV_HEX:
+        raise RuntimeError("ERROR FATAL: Una o ambas variables (CRYPTO_KEY, CRYPTO_IV) no están definidas en la configuración de Cloud Run.")
 
-KEY = bytes.fromhex(KEY)
-IV = bytes.fromhex(IV)
+    print(f"[DEBUG] CRYPTO_KEY leída: {'*' * len(KEY_HEX)}") # No mostrar la clave real en logs
+    print(f"[DEBUG] CRYPTO_IV leída: {'*' * len(IV_HEX)}")
 
+    print("[DEBUG] Intentando convertir claves de hexadecimal a bytes...")
+    KEY = bytes.fromhex(KEY_HEX)
+    IV = bytes.fromhex(IV_HEX)
+    print("[DEBUG] Conversión de claves exitosa.")
+
+except Exception as e:
+    print("!!!!!!!!!! ERROR CRÍTICO AL INICIAR LA APLICACIÓN !!!!!!!!!!!", file=sys.stderr)
+    print(f"Tipo de error: {type(e).__name__}", file=sys.stderr)
+    print(f"Mensaje de error: {e}", file=sys.stderr)
+    print("Traceback completo:", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    sys.exit(1) # Forzamos la salida para asegurar que el contenedor se detenga
+    
 def cypher(message: str) -> str:
     cipher_c = AES.new(KEY, AES.MODE_CFB, IV)
     ciphered_bytes = cipher_c.encrypt(message.encode('utf-8'))
@@ -68,4 +86,4 @@ def get_all_messages():
 
 if __name__ == '__main__':
     print("Microservicios de Backend (Crypto y Storage) iniciados en el puerto 8080")
-    app.run(host='0.0.0.0', port=8080)
+    app.run()
