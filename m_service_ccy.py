@@ -6,8 +6,8 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 
 CORS(app)
 
-CRYPTO_SERVICE_URL = 'https://sscdtysqza.us-east-2.awsapprunner.com' #'http://localhost:5001'
-MESSAGE_STORE_SERVICE_URL = 'https://pcc4jabvpb.us-east-2.awsapprunner.com'# 'http://localhost:5002'
+CRYPTO_SERVICE_URL = 'https://pwa-chat-cifrado-970061201371.europe-west1.run.app' #'http://localhost:5001'
+MESSAGE_STORE_SERVICE_URL = 'https://pwa-chat-cifrado-970061201371.europe-west1.run.app'# 'http://localhost:5002'
 
 
 @app.get('/')
